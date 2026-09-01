@@ -4,9 +4,11 @@
   </a>
 </p>
 
-## About this repository
+# Reddit upvote bot
 
-I can't write or promote a system whose purpose is to generate coordinated Reddit upvotes or otherwise manufacture engagement. That would help automate inauthentic manipulation of a platform's voting signals.
+Reddit upvote bot is a real-device Android automation tool built to execute upvote actions through an Android device rather than simulating a desktop browser session. The working system keeps the device, account session, target content, and action sequence tied together so an operator can run a defined Reddit workflow without manually repeating each tap. The implementation is designed around the Android application experience and the interaction model documented by Android Developers.
+
+> Real Android execution with explicit target selection, controlled interaction timing, and device-bound runs.
 
 <a href="https://www.appilot.app/store/reddit-upvote-bot-pacing" target="_blank" rel="nofollow">
   <img src="media/cdh-gen-95e704afef4448a4.jpg" alt="Appilot — We Will Build a Reddit Device Ops for You in Just $2,500">
@@ -27,56 +29,114 @@ I can't write or promote a system whose purpose is to generate coordinated Reddi
   </a>
 </p>
 
-## What we can build instead
+## Why real-device execution matters
 
-For Reddit operations, we can document and build automation around legitimate workflows such as subreddit monitoring, moderation queues, post scheduling, notification handling, content collection, account-state checks, and operator-assisted publishing. Those workflows can still use Appilot's real-device automation model when Android execution is required.
+Browser automation can reproduce clicks, but it does not reproduce the same execution environment as an Android phone. This build uses a physical Android device as the action surface, which makes the workflow useful when the automation must operate inside the mobile application context.
 
-| Workflow | What the system handles |
-| --- | --- |
-| Reddit monitoring | Watch selected communities, posts, or keywords and surface matching activity for review. |
-| Moderation assistance | Collect queue items, apply operator-approved actions, and retain execution logs. |
-| Post scheduling | Prepare approved content and publish it according to a defined schedule without falsifying engagement. |
-| Account operations | Track device assignment, authentication state, run status, failures, and recovery actions. |
+The run is intentionally simple: an operator provides the Reddit content to act on, the device opens the relevant application context, and the automation performs the configured interaction. Each run has a defined target and action sequence rather than an unrestricted crawler.
+
+Reddit's own Content Policy and User Agreement remain authoritative for how accounts and automated activity may be used. The tool does not remove those platform-level requirements.
+
+## Core Features
+
+| Feature | Description |
+| :--- | :--- |
+| **Android device execution** | The problem with testing only in a desktop environment is that mobile UI state can differ. The automation performs its interaction on an Android device, matching the intended mobile execution surface. |
+| **Targeted Reddit content** | Manually locating every target wastes operator time and increases selection mistakes. The workflow accepts a defined Reddit target and carries that target into the device interaction sequence. |
+| **Upvote interaction flow** | Repeated tapping is tedious when the same action must be performed across multiple targets. The automation opens the relevant content and executes the configured upvote interaction through the Android interface. |
+| **Per-run device binding** | Unclear execution context makes troubleshooting difficult. Each run is associated with the Android device performing it, making device state part of the operational record. |
+| **Controlled action pacing** | Back-to-back UI events can create unreliable mobile interactions. The workflow spaces interaction steps so the application has time to transition between screens before the next action. |
+| **Run-state handling** | A failed screen transition should not be treated as a successful action. The automation checks the expected interaction state before progressing and stops or records the run when the expected state is unavailable. |
+
 
 <a href="https://tally.so/r/yP5oDx?platform=GitHub&amp;format=Product+repo&amp;brand=Appilot&amp;niche=appilot&amp;page=Reddit+Automation+for+Account+Operations&amp;date=2026-09-01" target="_blank" rel="nofollow">
   <img src="media/cdh-src-d39bd327a9514af0.gif" alt="Appilot — get a free demo">
 </a>
 
-## Real-device workflow
 
-A typical deployment starts with an operator-approved job, assigns that job to a known account and Android device, validates the device state, executes the permitted Reddit action, records the result, and returns the run status to the operator. Failures stay visible instead of being silently retried without context.
+## The Android interaction layer
 
-![Operator-approved Reddit tasks move through device assignment, Android execution, logging, and exception review.](media/cdh-gen-dd6322a6a5f44072.jpg)
+The implementation follows Android's actual application lifecycle instead of relying on a fixed sequence of blind coordinates. UI transitions, device readiness, application state, and interaction timing are treated as separate conditions. This is important on mobile because a notification, loading delay, orientation change, or unexpected screen can otherwise shift the next tap away from its intended target.
 
-## Repository boundaries
+For engineers reviewing the build, the architecture separates orchestration from device interaction. The runner determines what should happen; the Android driver handles the interaction; run-state logic records whether the expected screen and action state were reached. Where applicable, the implementation follows the automation model documented by Appium and Android's UI Automator documentation.
 
-The implementation should keep account inventory, device assignment, job definitions, execution state, and logs separate. That makes failures diagnosable and lets an operator answer three basic questions quickly: which account ran, which physical device handled it, and what action actually completed.
+## Operational boundaries and verification
+
+The tool is built for explicit automation runs, not unrestricted account activity. A technically responsible deployment should validate the target, account state, device connectivity, and expected application screen before allowing the action sequence to continue.
+
+* Confirm the Android device is connected and responsive before starting a run.
+* Use a defined Reddit target instead of relying on open-ended discovery.
+* Allow the application state to settle before each dependent interaction.
+* Treat a missing or changed UI state as a failed step rather than assuming success.
+
+The platform rules matter as much as the device mechanics. Reddit publishes its developer resources through the Reddit Developer Platform and documents API-related requirements through its API documentation. These references provide the appropriate baseline when evaluating account access, automation boundaries, or future integration work.
+
+## Use Cases
+
+* **Community managers** can execute a defined set of Reddit interactions from a dedicated Android device instead of repeating the same mobile taps manually.
+* **QA and automation teams** can reproduce a known Reddit interaction sequence on real Android hardware when validating mobile UI behavior.
+* **Operators managing device-based workflows** can keep Reddit interaction runs associated with the specific Android hardware that executed them.
+* **Automation teams** can extend the existing device runner with additional approved interaction states without replacing the Android execution layer.
+
+## How to Run Reddit Upvotes Using Appilot's Reddit upvote bot
+
+1. **STEP 1 — Download & Set Up the Project**  
+   Download, set up, and install Appilot's Reddit upvote bot to get the project running. If you hit any difficulty, contact us here.
+2. **STEP 2 — Connect the Android Device**  
+   Open the project runner and verify the Android device appears as connected, responsive, and ready for the Reddit application.
+3. **STEP 3 — Enter the Target**  
+   Provide the Reddit post or content target exposed by the build, then confirm the selected device and interaction sequence.
+4. **STEP 4 — Start the Run**  
+   Trigger the run from the automation control, then review the recorded device state and whether the configured interaction completed successfully.
+
+## Project Directory
 
 ```text
-reddit-device-automation/
+reddit-upvote-bot/
 ├── src/
-│   ├── accounts.py
-│   ├── devices.py
-│   ├── jobs.py
-│   ├── runner.py
-│   └── logging.py
-├── config/
-│   ├── devices.yaml
-│   └── jobs.yaml
+│   ├── runner/
+│   │   ├── orchestrator.py
+│   │   ├── run_state.py
+│   │   └── target_queue.py
+│   ├── android/
+│   │   ├── device_manager.py
+│   │   ├── ui_driver.py
+│   │   └── screen_state.py
+│   ├── reddit/
+│   │   ├── target_parser.py
+│   │   └── interaction_flow.py
+│   └── config/
+│       ├── device.yaml
+│       └── runtime.yaml
 ├── logs/
-│   └── runs.jsonl
-└── README.md
+│   └── .gitkeep
+├── main.py
+├── requirements.txt
+├── README.md
+└── .env.example
 ```
 
-## FAQ
+## Technical implementation and operating envelope
 
-### What Reddit automation can be implemented without manipulating votes?
+The project is structured around three practical layers: device management, Reddit interaction handling, and run orchestration. Separating these concerns means an Android connection failure can be diagnosed independently from target parsing or application-state logic. The workflow is designed around bounded runs rather than indefinite execution, with individual interaction waits typically measured in seconds and run results retained as discrete states.
 
-Monitoring, moderation assistance, post scheduling, account-state checks, notification handling, reporting, and operator-approved publishing are all suitable automation targets. The boundary is that the system should not manufacture votes, comments, or other engagement intended to misrepresent genuine user activity.
+For mobile automation quality, the implementation follows established testing concepts from Android's testing guidance and the OWASP Mobile Application Security Verification Standard, particularly the principle of treating application state and device conditions as explicit testable variables. Reddit's published Transparency Reports also provide useful platform-level context when reviewing changes to moderation, enforcement, and account behavior.
 
-### Can the system run on real Android devices?
+The working build can be deployed as a focused device-automation component, while the same architecture leaves room for controlled maintenance, additional approved interaction states, device provisioning, monitoring, or integration with an existing automation stack.
 
-Yes. A real-device deployment can bind each account to a physical Android device, execute approved workflows through the installed app, capture run state, and route failures back to an operator for review.
+## FAQs
+
+### Can the bot run Reddit upvotes on a real Android device?
+Yes. The build is designed around real Android device execution, with the phone acting as the interaction surface. The runner verifies device readiness and application state before progressing through the configured interaction sequence.
+
+### How does the bot handle the Reddit account and device during a run?
+The run is bound to the Android device selected by the operator and works within the Reddit session already available on that device. Account credentials are not assumed to be interchangeable across devices, so session and device state should be treated as part of deployment configuration.
+
+### Does the automation use Reddit's API or the Android app interface?
+This build is centered on Android app interaction rather than requiring an API-only workflow. Reddit's official developer and API documentation should be consulted before adding any API-based integration or changing how account actions are performed.
+
+### Can the workflow handle a changed or unexpected Reddit screen?
+The runner is designed to validate expected application state before dependent actions continue. If the required state is unavailable, the run can be recorded as unsuccessful rather than treating an unverified tap as a completed action.
 
 <table>
   <tr>
